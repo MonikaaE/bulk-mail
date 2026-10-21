@@ -908,3 +908,59 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+
+
+async function sendBulkWhatsApp() {
+  const phoneId = document.getElementById('wa-phone-id').value.trim();
+  const token = document.getElementById('wa-token').value.trim();
+  const templateName = document.getElementById('wa-template').value.trim() || 'custom_message';
+  const customBody = document.getElementById('wa-custom-body').value.trim();
+  const text = document.getElementById('wa-recipients').value.trim();
+
+  if (!phoneId || !token || !customBody || !text) {
+    showToast('Please fill all fields: Phone ID, Token, Custom Message, and Recipients.', 'error');
+    return;
+  }
+
+  const recipients = text.split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const [phone, name] = line.split(',');
+      return { 
+        phone: (phone || '').trim(), 
+        name: (name || '').trim() || 'Hiring Manager' 
+      };
+    });
+
+  const sendBtn = document.getElementById('wa-send-btn');
+  const resultBox = document.getElementById('wa-result');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '⏳ Sending WhatsApp messages...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/whatsapp/send-bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phoneNumberId: phoneId,
+        accessToken: token,
+        templateName,
+        customBody,
+        recipients
+      })
+    });
+    const data = await res.json();
+    resultBox.className = data.success ? 'send-result success' : 'send-result error';
+    resultBox.innerHTML = `<strong>Result:</strong> ${data.sent || 0} sent, ${data.failed || 0} failed.`;
+    resultBox.classList.remove('hidden');
+    showToast(data.success ? 'WhatsApp blast finished!' : data.message, data.success ? 'success' : 'error');
+  } catch (err) {
+    showToast(`Error: ${err.message}`, 'error');
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = '🚀 Send WhatsApp Blast';
+  }
+}
+
+

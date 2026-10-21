@@ -243,6 +243,106 @@ app.use((err, req, res, next) => {
   next();
 });
 
+
+// ═══════════════════════════════════════════════════════════
+//  WhatsApp Business Cloud API Endpoints
+// ═══════════════════════════════════════════════════════════
+
+async function sendWhatsAppMessage(phoneNumberId, accessToken, recipientPhone, templateName, languageCode, bodyParams, headerDocUrl, headerDocFilename) {
+  const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+  const components = [];
+
+  if (headerDocUrl) {
+    components.push({
+      type: 'header',
+      parameters: [{
+        type: 'document',
+        document: { link: headerDocUrl, filename: headerDocFilename || 'Resume.pdf' }
+      }]
+    });
+  }
+
+  if (bodyParams && bodyParams.length > 0) {
+    components.push({
+      type: 'body',
+      parameters: bodyParams.map(text => ({ type: 'text', text }))
+    });
+  }
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    to: recipientPhone,
+    type: 'template',
+    template: {
+      name: templateName,
+      language: { code: languageCode || 'en_US' },
+      ...(components.length > 0 && { components })
+    }
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+  if (data.error) throw new Error(data.error.message);
+  return data;
+}
+
+// Test WhatsApp credentials
+app.post('/api/whatsapp/test-connection', async (req, res) => {
+  try {
+    const { phoneNumberId, accessToken } = req.body;
+    const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const data = await response.json();
+    if (data.error) return res.json({ success: false, message: data.error.message });
+    res.json({ success: true, message: `Connected to WhatsApp Phone ID: ${data.id}` });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// Bulk send WhatsApp messages
+app.post('/api/whatsapp/send-bulk', async (req, res) => {
+  try {
+    const { phoneNumberId, accessToken, recipients, templateName, languageCode, resumePdfUrl, delayMs } = req.body;
+    const list = typeof recipients === 'string' ? JSON.parse(recipients) : recipients;
+
+    let sent = 0;
+    let failed = 0;
+    const errors = [];
+    const delay = parseInt(delayMs) || 2000;
+
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i];
+      const cleanPhone = r.phone.replace(/[^0-9]/g, '');
+      const bodyParams = [r.name || 'Hiring Manager'];
+
+      try {
+        await sendWhatsAppMessage(phoneNumberId, accessToken, cleanPhone, templateName, languageCode || 'en_US', bodyParams, resumePdfUrl, `${r.name || 'Candidate'}_Resume.pdf`);
+        sent++;
+      } catch (e) {
+        failed++;
+        errors.push({ phone: cleanPhone, error: e.message });
+      }
+
+      if (i < list.length - 1) await sleep(delay);
+    }
+
+    res.json({ success: true, sent, failed, total: list.length, errors });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+
 // ─── Start Server ────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n  ✉  MailFlow server running at http://localhost:${PORT}\n`);

@@ -27,6 +27,9 @@
       </a>
       <a href="#" class="nav-item" data-page="settings" id="nav-settings">
         <span class="nav-icon">⚙</span><span class="nav-label">SMTP Settings</span>
+      </a> 
+      <a href="#" class="nav-item" data-page="whatsapp" id="nav-whatsapp">
+        <span class="nav-icon">💬</span><span class="nav-label">WhatsApp Blast</span>
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -77,7 +80,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="from-name">Your Name</label>
-                <input type="text" id="from-name" class="form-input" placeholder="e.g. Manigandan" />
+                <input type="text" id="from-name" class="form-input" placeholder="e.g. Moni" />
               </div>
               <div class="form-group">
                 <label class="form-label" for="email-subject">Subject Line</label>
@@ -365,6 +368,75 @@ Jane Doe, jane.doe@bigfirm.com
         </div>
       </div>
     </section>
+
+    <!-- PAGE: WHATSAPP BLAST -->
+<section class="page" id="page-whatsapp">
+  <div class="page-header">
+    <h1>WhatsApp Bulk Sender</h1>
+    <p class="page-subtitle">Send templated WhatsApp outreach to recruiters via Meta Cloud API</p>
+  </div>
+
+  <div class="compose-flow">
+       <!-- Step 1: Credentials & Custom Message -->
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-number">1</div>
+        <div class="step-title">
+          <h2>WhatsApp Configuration & Message</h2>
+          <p>Configure credentials and type your custom message</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone Number ID</label>
+            <input type="text" id="wa-phone-id" class="form-input" placeholder="e.g. 1048291048102" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Template Name</label>
+            <input type="text" id="wa-template" class="form-input" value="custom_message" placeholder="custom_message" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Permanent Access Token</label>
+          <input type="password" id="wa-token" class="form-input" placeholder="EAABw..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Custom Message Content</label>
+          <textarea id="wa-custom-body" class="paste-textarea" style="height:120px;" placeholder="Hi {{name}}, 
+
+I am interested in the Software Engineer position at your company. I have attached my resume for your review.
+
+Best regards,
+Moni"></textarea>
+          <span class="form-hint">Tip: Use <code>{{name}}</code> to automatically insert the recipient's name.</span>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-number">2</div>
+        <div class="step-title">
+          <h2>Recruiter Phone Numbers</h2>
+          <p>One per line: phone, Name (e.g. +919876543210, John Doe)</p>
+        </div>
+      </div>
+      <div class="step-body">
+        <textarea id="wa-recipients" class="paste-textarea" style="height:140px;" placeholder="+919876543210, John Doe&#10;+919123456789, Jane Smith"></textarea>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <button class="btn btn-primary btn-lg" onclick="sendBulkWhatsApp()" id="wa-send-btn">
+        🚀 Send WhatsApp Blast
+      </button>
+      <div id="wa-result" class="send-result hidden"></div>
+    </div>
+  </div>
+</section>
+
   </main>
 
   <!-- TOAST -->
